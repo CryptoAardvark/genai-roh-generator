@@ -4,53 +4,76 @@ metadata:
   name: bootstrap
   namespace: openshift-gitops
 spec:
+  goTemplate: true
   generators:
   - list:
       elements:
       - cluster: in-cluster
         name: rhoai-install
         repoURL: https://github.com/rh-aiservices-bu/genai-rhoai-poc-template.git
-        targetRevision: main
+        targetRevision: dev
         path: common-utils/rhoai/install-operator
       - cluster: in-cluster
         name: rhoai-config
         repoURL: https://github.com/rh-aiservices-bu/genai-rhoai-poc-template.git
-        targetRevision: main
+        targetRevision: dev
         path: common-utils/rhoai/config
       - cluster: in-cluster
         name: rhoai-deploy
         repoURL: https://github.com/rh-aiservices-bu/genai-rhoai-poc-template.git
-        targetRevision: main
+        targetRevision: dev
         path: common-utils/rhoai/deploy
+      - cluster: in-cluster
+        name: demo-project
+        repoURL: https://github.com/rh-aiservices-bu/genai-rhoai-poc-template.git
+        targetRevision: dev
+        path: common-utils/demo-project
+      - cluster: in-cluster
+        name: mcgw-install
+        repoURL: https://github.com/rh-aiservices-bu/genai-rhoai-poc-template.git
+        targetRevision: dev
+        path: common-utils/mcgw/install-operator
+      - cluster: in-cluster
+        name: mcgw-deploy
+        repoURL: https://github.com/rh-aiservices-bu/genai-rhoai-poc-template.git
+        targetRevision: dev
+        path: common-utils/mcgw/deploy
+      - cluster: in-cluster
+        name: mcgw-config
+        repoURL: https://github.com/rh-aiservices-bu/genai-rhoai-poc-template.git
+        targetRevision: dev
+        path: common-utils/mcgw/config
+      - cluster: in-cluster
+        name: model-deploy
+        repoURL: https://github.com/rh-aiservices-bu/genai-rhoai-poc-template.git
+        targetRevision: dev
+        path: basic-vanilla-poc/bootstrap/model-deploy
+        prune: "false"
       - cluster: in-cluster
         name: poc-primer
         repoURL: https://github.com/rh-aiservices-bu/genai-rhoai-poc-template.git
-        targetRevision: main
+        targetRevision: dev
         path: basic-vanilla-poc/bootstrap/primer
       - cluster: in-cluster
         name: anythingllm
         repoURL: https://github.com/rh-aiservices-bu/genai-rhoai-poc-template.git
-        targetRevision: main
+        targetRevision: dev
         path: basic-vanilla-poc/bootstrap/anythingllm
   template:
     metadata:
-      name: "{{name}}"
+      name: "{{ .name }}"
       namespace: openshift-gitops
       labels:
         component: bootstrap
-        purpose: "{{name}}"
     spec:
       project: default
       source:
-        repoURL: "{{repoURL}}"
-        targetRevision: "{{targetRevision}}"
-        path: "{{path}}"
+        repoURL: "{{ .repoURL }}"
+        targetRevision: "{{ .targetRevision }}"
+        path: "{{ .path }}"
       destination:
-        server: "https://kubernetes.default.svc"
+        name: "{{ .cluster }}"
       syncPolicy:
-        automated:
-          prune: true
-          selfHeal: true
         syncOptions:
           - RespectIgnoreDifferences=true
           - Retry=true
@@ -59,4 +82,10 @@ spec:
           backoff:
             duration: 15s
             factor: 2
-            maxDuration: 5m # Maximum retry interval
+            maxDuration: 5m
+  templatePatch: |
+    spec:
+      syncPolicy:
+        automated:
+          prune: {{ .prune | default "true" }}
+          selfHeal: {{ .selfHeal | default "true" }}
